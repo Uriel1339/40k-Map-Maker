@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Structure as StructureType } from '../types';
+import { Character as CharacterType } from '../types/character';
 import { useStore } from '../store/useStore';
 
 interface Props {
-  structure: StructureType;
+  character: CharacterType;
 }
 
-export const Structure: React.FC<Props> = ({ structure }) => {
+export const Character: React.FC<Props> = ({ character }) => {
   const zoom = useStore(state => state.zoom);
-  const updateStructureLabel = useStore(state => state.updateStructureLabel);
-  const selectedStructureId = useStore(state => state.selectedStructureId);
-  const setSelectedStructureId = useStore(state => state.setSelectedStructureId);
+  const selectedCharacterId = useStore(state => state.selectedCharacterId);
+  const setSelectedCharacterId = useStore(state => state.setSelectedCharacterId);
+  const updateCharacterName = useStore(state => state.updateCharacterName);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [label, setLabel] = useState(structure.label || '');
+  const [name, setName] = useState(character.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: structure.id,
+    id: character.id,
     disabled: isEditing
   });
 
@@ -31,7 +31,7 @@ export const Structure: React.FC<Props> = ({ structure }) => {
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setSelectedStructureId(structure.id);
+    setSelectedCharacterId(character.id);
     setIsEditing(true);
   };
 
@@ -39,14 +39,14 @@ export const Structure: React.FC<Props> = ({ structure }) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isEditing) {
-      setSelectedStructureId(structure.id);
+      setSelectedCharacterId(character.id);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setLabel(e.target.value);
+    setName(e.target.value);
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
@@ -61,62 +61,71 @@ export const Structure: React.FC<Props> = ({ structure }) => {
       finishEditing();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
-      setLabel(structure.label || '');
+      setName(character.name);
     }
   };
 
   const finishEditing = () => {
-    if (label.trim()) {
-      updateStructureLabel(structure.id, label.trim());
+    if (name.trim()) {
+      updateCharacterName(character.id, name.trim());
     }
     setIsEditing(false);
   };
 
-  const style: React.CSSProperties = {
+  const containerStyle: React.CSSProperties = {
     position: 'absolute',
-    width: `${structure.width}px`,
-    height: `${structure.height}px`,
-    left: `${structure.position.x}px`,
-    top: `${structure.position.y}px`,
+    left: `${character.position.x}px`,
+    top: `${character.position.y}px`,
     transform: transform 
-      ? `translate3d(${transform.x / zoom}px, ${transform.y / zoom}px, 0) rotate(${structure.rotation}deg)`
-      : `rotate(${structure.rotation}deg)`,
-    backgroundColor: structure.type === 'wall' ? '#1F2937' :
-                    structure.type === 'building' ? '#4B5563' :
-                    structure.type === 'ruins' ? '#9CA3AF' : '#6B7280',
+      ? `translate3d(${transform.x / zoom}px, ${transform.y / zoom}px, 0)`
+      : undefined,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     cursor: isEditing ? 'text' : 'move',
+  };
+
+  const circleStyle: React.CSSProperties = {
+    width: `${character.size}px`,
+    height: `${character.size}px`,
+    backgroundColor: character.faction === 'ally' ? '#3B82F6' : '#EF4444',
+    borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: 'white',
-    fontSize: '14px',
-    userSelect: 'none'
+    fontSize: '24px',
+    fontWeight: 'bold',
+    border: selectedCharacterId === character.id ? '3px solid yellow' : 'none'
   };
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={containerStyle}
       {...(isEditing ? {} : { ...listeners, ...attributes })}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      className={`${selectedStructureId === structure.id ? 'ring-2 ring-yellow-400' : ''}`}
     >
+      <div style={circleStyle}>
+        {character.initial}
+      </div>
       {isEditing ? (
         <input
           ref={inputRef}
           type="text"
-          value={label}
+          maxLength={20}
+          value={name}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
-          className="w-3/4 px-2 py-1 text-black text-sm bg-white rounded border-none focus:ring-2 focus:ring-blue-500"
+          className="mt-1 px-2 py-1 text-sm bg-white rounded border-none focus:ring-2 focus:ring-blue-500"
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <div className="select-none">
-          {structure.label || structure.type}
+        <div className="mt-1 px-2 py-1 bg-black bg-opacity-50 rounded text-white text-sm select-none">
+          {character.name}
         </div>
       )}
     </div>

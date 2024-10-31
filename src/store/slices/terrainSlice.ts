@@ -5,13 +5,13 @@ export interface TerrainSlice {
   terrain: TerrainTile[];
   gridSize: number;
   isTerrainLocked: boolean;
-  addTerrain: (terrain: TerrainTile) => void;
+  addTerrain: (terrain: Partial<TerrainTile>) => void;
   removeTerrain: (id: string) => void;
   updateTerrainPosition: (id: string, position: Position) => void;
   setGridSize: (size: number) => void;
   setTerrainLocked: (locked: boolean) => void;
   fillTerrainGrid: (type: TerrainType) => void;
-  randomizeTerrainGrid: () => void;
+  fillRandomTerrain: () => void;
   clearTerrain: () => void;
 }
 
@@ -20,9 +20,15 @@ export const createTerrainSlice: StateCreator<TerrainSlice> = (set) => ({
   gridSize: 50,
   isTerrainLocked: false,
 
-  addTerrain: (terrain) => set((state) => ({ 
-    terrain: [...state.terrain, terrain] 
-  })),
+  addTerrain: (terrain) => set((state) => {
+    const newTerrain: TerrainTile = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: terrain.type || 'urban',
+      position: terrain.position || { x: 0, y: 0 },
+      elevation: terrain.elevation || 0
+    };
+    return { terrain: [...state.terrain, newTerrain] };
+  }),
 
   removeTerrain: (id) => set((state) => ({ 
     terrain: state.terrain.filter(t => t.id !== id) 
@@ -41,22 +47,23 @@ export const createTerrainSlice: StateCreator<TerrainSlice> = (set) => ({
     const { gridSize } = state;
     const newTerrain: TerrainTile[] = [];
     
-    // Calculate grid dimensions based on viewport
-    const cols = Math.ceil(window.innerWidth / gridSize);
-    const rows = Math.ceil(window.innerHeight / gridSize);
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    // Calculate offset to center the grid
-    const offsetX = -(cols * gridSize) / 2;
-    const offsetY = -(rows * gridSize) / 2;
+    const cols = Math.ceil(viewportWidth / gridSize);
+    const rows = Math.ceil(viewportHeight / gridSize);
     
-    for (let x = 0; x < cols; x++) {
-      for (let y = 0; y < rows; y++) {
+    const startX = -(cols * gridSize) / 2;
+    const startY = -(rows * gridSize) / 2;
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
         newTerrain.push({
-          id: `terrain-${x}-${y}`,
+          id: `terrain-${col}-${row}`,
           type,
           position: {
-            x: offsetX + (x * gridSize),
-            y: offsetY + (y * gridSize)
+            x: startX + (col * gridSize),
+            y: startY + (row * gridSize)
           },
           elevation: 0
         });
@@ -66,26 +73,29 @@ export const createTerrainSlice: StateCreator<TerrainSlice> = (set) => ({
     return { terrain: newTerrain };
   }),
 
-  randomizeTerrainGrid: () => set((state) => {
+  fillRandomTerrain: () => set((state) => {
     const terrainTypes: TerrainType[] = ['urban', 'wilderness', 'desert', 'jungle'];
     const { gridSize } = state;
     const newTerrain: TerrainTile[] = [];
     
-    const cols = Math.ceil(window.innerWidth / gridSize);
-    const rows = Math.ceil(window.innerHeight / gridSize);
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    const offsetX = -(cols * gridSize) / 2;
-    const offsetY = -(rows * gridSize) / 2;
+    const cols = Math.ceil(viewportWidth / gridSize);
+    const rows = Math.ceil(viewportHeight / gridSize);
     
-    for (let x = 0; x < cols; x++) {
-      for (let y = 0; y < rows; y++) {
+    const startX = -(cols * gridSize) / 2;
+    const startY = -(rows * gridSize) / 2;
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
         const randomType = terrainTypes[Math.floor(Math.random() * terrainTypes.length)];
         newTerrain.push({
-          id: `terrain-${x}-${y}`,
+          id: `terrain-${col}-${row}`,
           type: randomType,
           position: {
-            x: offsetX + (x * gridSize),
-            y: offsetY + (y * gridSize)
+            x: startX + (col * gridSize),
+            y: startY + (row * gridSize)
           },
           elevation: 0
         });

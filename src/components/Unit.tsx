@@ -1,46 +1,46 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { Unit as UnitType } from '../types';
+import { useStore } from '../store/useStore';
 
 interface Props {
   unit: UnitType;
-  style?: React.CSSProperties;
-  locked?: boolean;
-  selected?: boolean;
 }
 
-export const Unit: React.FC<Props> = ({ unit, style, locked, selected }) => {
+export const Unit: React.FC<Props> = ({ unit }) => {
+  const zoom = useStore(state => state.zoom);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: unit.id,
-    disabled: locked,
   });
 
-  const combinedStyle: React.CSSProperties = {
-    ...style,
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+  const style: React.CSSProperties = {
     position: 'absolute',
-    left: unit.position.x,
-    top: unit.position.y,
+    width: `${unit.width}px`,
+    height: `${unit.height}px`,
+    left: `${unit.position.x}px`,
+    top: `${unit.position.y}px`,
+    transform: transform 
+      ? `translate3d(${transform.x / zoom}px, ${transform.y / zoom}px, 0) rotate(${unit.rotation}deg)`
+      : `rotate(${unit.rotation}deg)`,
+    backgroundColor: unit.faction === 'ally' ? '#3B82F6' : '#EF4444',
+    cursor: 'move',
+    borderRadius: unit.type === 'character' ? '50%' : '0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontSize: '24px',
+    fontWeight: 'bold'
   };
 
   return (
     <div
       ref={setNodeRef}
-      style={combinedStyle}
-      {...(locked ? {} : { ...listeners, ...attributes })}
-      className={`w-10 h-10 rounded-full cursor-move ${
-        unit.faction === 'ally' ? 'bg-blue-500' :
-        unit.faction === 'enemy' ? 'bg-red-500' : 'bg-gray-500'
-      } ${selected ? 'ring-4 ring-yellow-400' : ''} ${locked ? 'opacity-75 cursor-not-allowed' : ''}`}
+      style={style}
+      {...listeners}
+      {...attributes}
     >
-      <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
-        {unit.type.charAt(0).toUpperCase()}
-      </div>
-      {unit.groupId && (
-        <div className="absolute -top-4 left-0 right-0 text-center text-xs font-bold text-purple-600">
-          ⬤
-        </div>
-      )}
+      {unit.type === 'character' && 'C'}
     </div>
   );
 };

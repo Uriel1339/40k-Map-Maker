@@ -11,18 +11,30 @@ const terrainInfo = {
 };
 
 export const TerrainPanel: React.FC = () => {
-  const { addTerrain, fillTerrainGrid, fillRandomTerrain, clearTerrain, gridSize, setGridSize } = useStore();
+  const { 
+    addTerrain, 
+    fillTerrainGrid, 
+    fillRandomTerrain, 
+    clearTerrain, 
+    gridSize, 
+    setGridSize,
+    zoom,
+    panOffset
+  } = useStore();
 
   const createTerrain = (type: TerrainType) => {
-    const randomX = Math.floor(Math.random() * 200) + 100;
-    const randomY = Math.floor(Math.random() * 200) + 100;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    const terrain = {
-      id: Math.random().toString(36).substr(2, 9),
+    // Calculate position in the center of the viewport
+    const x = (viewportWidth / 2) / zoom - panOffset.x / zoom;
+    const y = (viewportHeight / 2) / zoom - panOffset.y / zoom;
+
+    addTerrain({
       type,
-      position: { x: randomX, y: randomY },
-    };
-    addTerrain(terrain);
+      position: { x, y },
+      elevation: 0
+    });
   };
 
   return (
@@ -42,7 +54,7 @@ export const TerrainPanel: React.FC = () => {
         </div>
       </CollapsiblePanel>
 
-      <CollapsiblePanel title="Add Terrain">
+      <CollapsiblePanel title="Add Terrain" defaultOpen>
         <div className="grid grid-cols-2 gap-2">
           {(Object.entries(terrainInfo) as [TerrainType, { name: string; color: string }][]).map(([type, info]) => (
             <button
